@@ -1,0 +1,15 @@
+.DS_Store
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+__pycache__/
+
+# Ajustes de Obsidian que son de cada persona, no del equipo
+.obsidian/appearance.json
+.obsidian/graph.json
+.obsidian/plugins/omnisearch/data.json
+.obsidian/plugins/table-editor-obsidian/data.json
+
+# Llave del modo mantenimiento: la crea una persona a mano, nunca se versiona
+.claude/mantenimiento
+# Ruta de Python a mano para el hook, distinta en cada puesto
+.githooks/python-ruta.txt

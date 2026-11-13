@@ -1,0 +1,18 @@
+#!/bin/sh
+# Merge driver de Git para los tickets (.gitattributes: 02_TICKETS/**/*.md merge=ticket; lo activa
+# comprobar_puesto con git config merge.ticket.driver). Dos personas que tocan el mismo ticket en
+# el mismo tramo ya no chocan por la marca ni por el historial: estampar.py --fusionar-ticket
+# conserva las líneas de los dos y deja la marca más reciente. Argumentos: base (%O), mi versión
+# (%A, donde se escribe el resultado) y la remota (%B). Si queda otro conflicto, sale 1 y Git lo marca.
+PY=""
+if [ -f .githooks/python-ruta.txt ]; then
+  RUTA=$(head -n 1 .githooks/python-ruta.txt | tr -d '\r')
+  v=$("$RUTA" -V 2>&1)
+  case "$v" in Python*) PY="$RUTA";; esac
+fi
+[ -z "$PY" ] && for c in py python3 python; do
+  v=$("$c" -V 2>&1)
+  case "$v" in Python*) PY="$c"; break;; esac
+done
+[ -z "$PY" ] && exit 1                       # sin Python, Git deja el conflicto normal
+exec "$PY" 05_GENERAL/Herramientas/estampar.py --fusionar-ticket "$1" "$2" "$3"

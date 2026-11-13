@@ -1,0 +1,19 @@
+#!/bin/sh
+# Merge driver de Git para 05_GENERAL/Guardia-de-tickets.md (.gitattributes: merge=guardia;
+# lo activa comprobar_puesto con git config merge.guardia.driver). Dos puestos que cambian
+# la guardia en el mismo tramo de 5 minutos ya no dejan un conflicto: gana la marca más
+# reciente. Argumentos: mi versión (%A, donde se escribe el resultado) y la remota (%B).
+# Primero .githooks/python-ruta.txt (no versionado): la ruta de Python a mano, para puestos
+# donde Obsidian arranca sin Python en su PATH aunque la terminal sí lo vea (visto el 2026-10-20).
+PY=""
+if [ -f .githooks/python-ruta.txt ]; then
+  RUTA=$(head -n 1 .githooks/python-ruta.txt | tr -d '\r')
+  v=$("$RUTA" -V 2>&1)
+  case "$v" in Python*) PY="$RUTA";; esac
+fi
+[ -z "$PY" ] && for c in py python3 python; do
+  v=$("$c" -V 2>&1)
+  case "$v" in Python*) PY="$c"; break;; esac
+done
+[ -z "$PY" ] && exit 1                       # sin Python, Git deja el conflicto normal
+exec "$PY" 05_GENERAL/Herramientas/estampar.py --fusionar "$1" "$2"

@@ -1,0 +1,15 @@
+# Finales de línea: Windows y Mac guardan distinto. Sin esto, un commit desde
+# Windows reescribiría ficheros enteros. Todo texto se normaliza a LF en el repo.
+* text=auto
+*.md text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.ps1 text eol=crlf
+# Los hooks no tienen extensión: sin esta línea, Windows los descarga con CRLF y Git no los ejecuta
+.githooks/* text eol=lf
+# La nota de guardia se fusiona sola (gana la marca más reciente): ver .githooks/fusionar-guardia
+05_GENERAL/Guardia-de-tickets.md merge=guardia
+# Los tickets se fusionan solos cuando dos personas tocan el mismo: ver .githooks/fusionar-ticket
+02_TICKETS/**/*.md merge=ticket

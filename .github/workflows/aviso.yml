@@ -1,0 +1,23 @@
+# Foto del día en Google Chat. La dispara correo_puente.gs (repository_dispatch "foto") a las
+# 08:55 de Madrid, 08:55 de São Paulo y 10:55 de Ciudad de México en días laborables, cada una
+# en su zona. Antes era un cron de GitHub: llegaba con hasta una hora de retraso o se perdía
+# (del 17 al 21 de octubre de 2026 salieron 4 de 9). Contenido: bau.py --aviso. Necesita el
+# secreto GCHAT_WEBHOOK; si no existe, el paso se salta sin fallar.
+name: Foto del día
+on:
+  repository_dispatch:
+    types: [foto]
+  workflow_dispatch:
+jobs:
+  aviso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GCHAT_WEBHOOK: ${{ secrets.GCHAT_WEBHOOK }}
+        run: |
+          texto=$(python3 05_GENERAL/Herramientas/bau.py --aviso)
+          if [ -z "$GCHAT_WEBHOOK" ]; then echo "Sin GCHAT_WEBHOOK: no se envía. Texto:"; echo "$texto"; exit 0; fi
+          [ -z "$texto" ] && { echo "Nada que avisar."; exit 0; }
+          python3 -c 'import json,sys; print(json.dumps({"text": sys.stdin.read()}))' <<< "$texto" \
+            | curl -sS -X POST -H "Content-Type: application/json" -d @- "$GCHAT_WEBHOOK"

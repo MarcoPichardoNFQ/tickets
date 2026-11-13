@@ -1,0 +1,20 @@
+{
+  "filters": {
+    "doShowOrphans": true,
+    "doShowAttachments": true
+  },
+  "groups": {
+    "groups": [
+      {
+        "query": "tag:#familia/A  ",
+        "color": "#ff0000"
+      }
+    ]
+  },
+  "display": {
+    "nodeSize": 4,
+    "linkThickness": 2,
+    "particleSize": 4,
+    "particleCount": 4
+  }
+}

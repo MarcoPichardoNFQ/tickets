@@ -1,0 +1,56 @@
+{
+  "_comentario": "Listas cerradas del vault. Única fuente de valores permitidos: la usan las plantillas, Templater, /ticket y el escáner del hook. Cambiar aquí y en ningún otro sitio.",
+  "estado": [
+    "Abierto",
+    "En curso",
+    "Revisión cliente",
+    "Pendiente despliegue UAT",
+    "Pruebas cliente UAT",
+    "Pendiente despliegue PRD",
+    "Resuelto"
+  ],
+  "prioridad": [
+    "Alta",
+    "Media",
+    "Baja"
+  ],
+  "dias_limite": {
+    "Alta": 0,
+    "Media": 1,
+    "Baja": 3
+  },
+  "categoria": [
+    "Rundeck",
+    "BBDD",
+    "Qlik",
+    "APIs",
+    "Otros",
+    "Sala"
+  ],
+  "entorno": [
+    "Producción",
+    "UAT"
+  ],
+  "origen": [
+    "email",
+    "reunión",
+    "llamada"
+  ],
+  "estado_proveedor": [
+    "Abierto",
+    "Resuelto"
+  ],
+  "estado_decision": [
+    "vigente",
+    "obsoleta"
+  ],
+  "prefijos_historico": [
+    "APROBACIÓN",
+    "APROBACIÓN UAT",
+    "APROBACIÓN PRD",
+    "RECHAZO"
+  ],
+  "zona_horaria": "America/Sao_Paulo",
+  "desplazamiento_horas": -3,
+  "_comentario_zona": "Todas las marcas de fecha y hora del vault (hook, Action, scripts, Templater) se calculan en zona_horaria. desplazamiento_horas es el respaldo cuando el sistema no trae la base de datos de zonas (Windows sin tzdata)."
+}

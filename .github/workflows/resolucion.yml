@@ -1,0 +1,47 @@
+# Resolución redactada, cada noche a las 04:37 UTC (01:37 São Paulo, antes del archivado de las
+# 05:07): los tickets Resueltos sin solucion_corta ni bloques de resolución reciben un borrador
+# de Gemini a partir de su histórico (redactar_resolucion.py), 20 por noche como máximo. Cada
+# fichero pasa el escáner; el que no, se descarta y no se toca. Minuto 37: GitHub pierde los de minuto 0.
+name: Resolución redactada
+on:
+  schedule:
+    - cron: "37 4 * * *"
+  workflow_dispatch:
+concurrency:
+  group: correo          # misma cola que el correo: nunca suben a la vez
+  cancel-in-progress: false
+jobs:
+  resolucion:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: America/Sao_Paulo
+    steps:
+      - uses: actions/checkout@v4
+      - name: Redactar, estampar y escanear
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          git config user.name "Correo automático"
+          git config user.email "correo-automatico@users.noreply.github.com"
+          python3 05_GENERAL/Herramientas/redactar_resolucion.py --max 20 > cambiados.txt
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if python3 05_GENERAL/Herramientas/escanear_pii.py "$f"; then
+              git add -- "$f" && python3 05_GENERAL/Herramientas/estampar.py "$f"
+            else
+              echo "Descartado por el escáner: $f"; git checkout -- "$f"
+            fi
+          done < cambiados.txt
+      - name: Commit y push
+        run: |
+          git diff --cached --quiet && exit 0
+          git commit -m "resolución: borradores redactados a partir del histórico"
+          git config merge.ticket.driver "sh .githooks/fusionar-ticket %O %A %B"
+          for i in 1 2 3; do
+            git push && exit 0
+            sleep $((i * 5))
+            git pull --rebase -q || { git rebase --abort; exit 1; }
+          done
+          exit 1

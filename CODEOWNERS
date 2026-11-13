@@ -1,0 +1,15 @@
+# Revisor obligatorio en los PR que toquen decisiones. El resto va por commit directo.
+01_DECISIONES/ @RicardoNfq
+
+# Zona protegida: infraestructura del vault. Cambios por rama mantenimiento/* + PR con revisor.
+/.githooks/ @RicardoNfq
+/.github/ @RicardoNfq
+/.claude/ @RicardoNfq
+/.obsidian/ @RicardoNfq
+/05_GENERAL/Herramientas/ @RicardoNfq
+/05_GENERAL/Plantillas/ @RicardoNfq
+/05_GENERAL/listas.json @RicardoNfq
+/05_GENERAL/Tickets.base @RicardoNfq
+/05_GENERAL/Dashboard.md @RicardoNfq
+/CLAUDE.md @RicardoNfq
+/README.md @RicardoNfq

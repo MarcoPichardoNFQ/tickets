@@ -1,0 +1,8 @@
+name: Escáner de datos personales
+on: [push, pull_request]
+jobs:
+  escanear:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 05_GENERAL/Herramientas/escanear_pii.py

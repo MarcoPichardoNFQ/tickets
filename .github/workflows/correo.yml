@@ -1,0 +1,118 @@
+# Entrada automática de correo (diseño §14.15 bis). Los avisos a Chat se silencian en fin de
+# semana (hora de São Paulo): el ticket se crea igual y el aviso diario del lunes lo recoge. Lo dispara correo_puente.gs con un
+# repository_dispatch de tipo "correo" con el JSON que extrae Gemini en
+# client_payload. La Action crea el ticket o añade la entrada al histórico, lo
+# escanea y solo commitea si está limpio. Si algo se cuela, avisa en Google Chat.
+name: Correo automático
+on:
+  repository_dispatch:
+    types: [correo]
+concurrency:
+  group: correo
+  cancel-in-progress: false
+jobs:
+  correo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: America/Sao_Paulo          # hora del vault (listas.json); los scripts la fuerzan igualmente
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ticket nuevo o entrada en el histórico
+        id: ticket
+        env:
+          CORREO: ${{ toJSON(github.event.client_payload) }}
+        run: |
+          set +e
+          salida=$(python3 05_GENERAL/Herramientas/correo_a_ticket.py); rc=$?
+          set -e
+          if [ "$rc" -eq 3 ]; then echo "descartado=true" >> "$GITHUB_OUTPUT"; echo "Gemini dice que no es ticket; nada que hacer."; exit 0; fi
+          [ "$rc" -ne 0 ] && exit 1
+          # el script imprime tres líneas: la ruta, el tipo (nuevo, sala, respuesta, estado, prd) y el detalle
+          echo "fichero=$(echo "$salida" | sed -n 1p)" >> "$GITHUB_OUTPUT"
+          echo "tipo=$(echo "$salida" | sed -n 2p)" >> "$GITHUB_OUTPUT"
+          echo "detalle=$(echo "$salida" | sed -n 3p)" >> "$GITHUB_OUTPUT"
+      - name: ¿Día laborable en São Paulo?
+        id: dia
+        run: echo "laborable=$(TZ=America/Sao_Paulo date +%u | awk '{print ($1<=5)?"true":"false"}')" >> "$GITHUB_OUTPUT"
+      - name: Estampar y escanear
+        id: escaner
+        if: steps.ticket.outputs.descartado != 'true'
+        run: |
+          git config user.name "Correo automático"
+          git config user.email "correo-automatico@users.noreply.github.com"
+          git add -A 02_TICKETS
+          python3 05_GENERAL/Herramientas/estampar.py "${{ steps.ticket.outputs.fichero }}"
+          python3 05_GENERAL/Herramientas/escanear_pii.py "${{ steps.ticket.outputs.fichero }}"
+      - name: Commit y push
+        id: subida
+        if: success() && steps.ticket.outputs.descartado != 'true'
+        run: |
+          git add -A 02_TICKETS
+          git diff --cached --quiet && exit 0
+          git commit -m "correo: ${{ steps.ticket.outputs.fichero }}"
+          # Si alguien subió algo entre el checkout y el push (el sync de Obsidian), GitHub lo
+          # rechaza: se trae lo nuevo y se reintenta. Los drivers fusionan un ticket tocado a la vez.
+          git config merge.ticket.driver "sh .githooks/fusionar-ticket %O %A %B"
+          git config merge.guardia.driver "sh .githooks/fusionar-guardia %A %B"
+          for i in 1 2 3; do
+            git push && exit 0
+            sleep $((i * 5))
+            git pull --rebase -q || { git rebase --abort; exit 1; }
+          done
+          exit 1
+      - name: Aviso de ticket nuevo
+        if: success() && steps.ticket.outputs.descartado != 'true' && steps.dia.outputs.laborable == 'true' && steps.ticket.outputs.tipo != 'respuesta'
+        env:
+          GCHAT_WEBHOOK: ${{ secrets.GCHAT_WEBHOOK }}
+          FICHERO: ${{ steps.ticket.outputs.fichero }}
+          TIPO: ${{ steps.ticket.outputs.tipo }}
+          DETALLE: ${{ steps.ticket.outputs.detalle }}
+        run: |
+          [ -z "$GCHAT_WEBHOOK" ] && exit 0
+          # Ticket nuevo: asignado al responsable de guardia, o sin responsable si no hay guardia.
+          # También avisan la sala, el cambio de estado por correo y la confirmación de PRD.
+          # Una respuesta en un hilo vivo no avisa (decisión del 2026-10-21: eran demasiadas); se ve
+          # en el histórico del ticket y en la foto del día.
+          python3 - <<'PY' | curl -sS -X POST -H "Content-Type: application/json" -d @- "$GCHAT_WEBHOOK"
+          import json, os, sys
+          sys.path.insert(0, "05_GENERAL/Herramientas")
+          from vault import frontmatter
+          f = os.environ["FICHERO"]
+          fm = frontmatter(open(f, encoding="utf-8").read())
+          nombre, resp = os.path.basename(f)[:-3], fm.get("responsable") or ""
+          cabecera = ("Ticket nuevo asignado a " + resp + ": " if resp else "Ticket nuevo sin responsable: ") + nombre
+          pie = "" if resp else "\nSin responsable de guardia: abre Obsidian y asígnalo."
+          if os.environ["TIPO"] == "sala":     # destacado: piden entrar ya; el ticket nace Resuelto
+              from correo_a_ticket import SALA
+              cabecera = "PIDEN SALA: " + SALA.search(fm.get("referencia_origen") or "P0").group().upper() + (" (guardia: " + resp + ")" if resp else "") + "\n" + nombre
+              pie = "\nQueda registrado y Resuelto. Si en la llamada sale una incidencia, abre un ticket aparte."
+          if os.environ["TIPO"] in ("estado", "prd"):   # el correo movió el estado o NTT confirma PRD
+              quien = " (responsable: " + resp + ")" if resp else " (sin responsable)"
+              cabecera = ("Estado cambiado por correo: " if os.environ["TIPO"] == "estado" else "Listo para cerrar: ") + nombre + quien + "\n" + os.environ["DETALLE"]
+              pie = ("\nSi no es correcto, devuélvelo al estado anterior en Obsidian." if os.environ["TIPO"] == "estado"
+                     else "\nComprueba en PRD y pásalo a Resuelto: el correo nunca cierra un ticket.")
+          texto = (cabecera + "\nAsunto del correo: " + (fm.get("referencia_origen") or "-")
+                   + "\nSíntoma: " + (fm.get("sintoma") or "-") + pie)
+          print(json.dumps({"text": texto}))
+          PY
+      - name: Aviso si el correo no se pudo convertir
+        if: failure() && steps.dia.outputs.laborable == 'true'
+        env:
+          GCHAT_WEBHOOK: ${{ secrets.GCHAT_WEBHOOK }}
+          HOJA: ${{ vars.HOJA_CORREOS_URL }}
+          CORREO: ${{ toJSON(github.event.client_payload) }}
+        run: |
+          [ -z "$GCHAT_WEBHOOK" ] && exit 0
+          asunto=$(python3 05_GENERAL/Herramientas/correo_a_ticket.py --asunto)
+          # Si falló la subida, el correo estaba bien: el motivo es otro y se dice
+          if [ "${{ steps.subida.outcome }}" = "failure" ]; then
+            MOTIVO="no se pudo subir a GitHub tras 3 intentos; el correo era correcto"
+          else
+            MOTIVO="datos personales, valor no válido o salida de Gemini ilegible"
+          fi
+          export MOTIVO
+          # fila y cuando los manda correo_puente.gs: localizan la línea en la hoja
+          ASUNTO="$asunto" FILA="${{ github.event.client_payload.fila }}" CUANDO="${{ github.event.client_payload.cuando }}" python3 -c 'import json,os; e=os.environ; print(json.dumps({"text": "Correo no convertido en ticket: \"" + (e.get("ASUNTO") or "sin asunto") + "\" (" + e["MOTIVO"] + "). Revisar en la hoja y crearlo a mano." + ("\nHoja de correos, fila " + e["FILA"] + (", leído a las " + e["CUANDO"][11:] if len(e.get("CUANDO", "")) > 11 else "") if e.get("FILA") else "") + ("\n" + e["HOJA"] if e.get("HOJA") else "")}))' \
+            | curl -sS -X POST -H "Content-Type: application/json" -d @- "$GCHAT_WEBHOOK"

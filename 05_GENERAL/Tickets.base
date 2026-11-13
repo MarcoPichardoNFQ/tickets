@@ -1,0 +1,119 @@
+filters:
+  and:
+    - file.inFolder("02_TICKETS")
+    - file.name.startsWith("NFQBAU-")
+formulas:
+  dias_en_estado: if(actualizado, (today() - date(actualizado.toString().slice(0, 10))).days, "")
+  vencido: if(fecha_limite && estado == "Abierto" && date(fecha_limite) < today(), "Vencido", "")
+properties:
+  formula.dias_en_estado:
+    displayName: Días en estado
+  formula.vencido:
+    displayName: Vencimiento
+  note.estado:
+    displayName: Estado
+  note.responsable:
+    displayName: Responsable
+views:
+  - type: kanban
+    name: Tablero
+    filters:
+      and:
+        - estado != "Resuelto"
+    groupBy:
+      property: estado
+      direction: ASC
+    groupOrder:
+      - Abierto
+      - En curso
+      - Revisión cliente
+      - Pendiente despliegue UAT
+      - Pruebas cliente UAT
+    order:
+      - file.name
+      - prioridad
+      - formula.dias_en_estado
+      - responsable
+    columnWidth: 500
+    imageAspectRatio: 1.25
+  - type: table
+    name: Abiertos por estado
+    filters:
+      and:
+        - estado != "Resuelto"
+    groupBy:
+      property: estado
+      direction: ASC
+    order:
+      - file.name
+      - prioridad
+      - responsable
+      - entorno
+      - fecha_limite
+      - formula.vencido
+      - formula.dias_en_estado
+    sort:
+      - property: file.name
+        direction: ASC
+      - property: formula.dias_en_estado
+        direction: ASC
+      - property: fecha_limite
+        direction: ASC
+    columnSize:
+      file.name: 533
+  - type: table
+    name: Por responsable
+    filters:
+      and:
+        - estado != "Resuelto"
+    groupBy:
+      property: responsable
+      direction: ASC
+    order:
+      - file.name
+      - estado
+      - prioridad
+      - fecha_limite
+      - formula.dias_en_estado
+  - type: table
+    name: Esperando a NTT
+    filters:
+      and:
+        - estado == "Pendiente despliegue UAT" || estado == "Pendiente despliegue PRD"
+    order:
+      - file.name
+      - estado
+      - entorno
+      - formula.dias_en_estado
+      - actualizado
+    sort:
+      - property: actualizado
+        direction: ASC
+  - type: cards
+    name: Tarjetas
+    filters:
+      and:
+        - estado != "Resuelto"
+    groupBy:
+      property: estado
+      direction: ASC
+    order:
+      - file.name
+      - prioridad
+      - responsable
+      - sintoma
+      - formula.vencido
+  - type: table
+    name: Soluciones
+    filters:
+      and:
+        - estado == "Resuelto"
+    order:
+      - file.name
+      - categoria
+      - sintoma
+      - solucion_corta
+      - fecha_resolucion
+    sort:
+      - property: fecha_resolucion
+        direction: DESC

@@ -1,0 +1,21 @@
+# Archivado diario, 05:07 UTC (02:07 São Paulo, antes del primer aviso): los tickets Resueltos
+# con 7 días o más desde fecha_resolucion pasan a 02_TICKETS/Archivo. Minuto 7, como el resto
+# de cron (GitHub pierde los de minuto 0).
+name: Archivado diario
+on:
+  schedule:
+    - cron: "7 5 * * *"
+  workflow_dispatch:
+jobs:
+  archivo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 05_GENERAL/Herramientas/archivar.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A 02_TICKETS
+          git diff --cached --quiet || git commit -m "archivo: resueltos con 7 días o más" && git push

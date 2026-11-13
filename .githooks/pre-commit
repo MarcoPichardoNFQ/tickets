@@ -1,0 +1,83 @@
+#!/bin/sh
+# Hook pre-commit del vault. Versionado en .githooks/ y activado con
+#   git config core.hooksPath .githooks
+# (lo hace comprobar_puesto). Mismo fichero en Mac y Windows: Git para
+# Windows trae el shell que lo ejecuta.
+#
+# Bloques:
+#   1. localizar Python (python3 en Mac/Linux, python o py en Windows)
+#   2. decisiones solo por rama + PR: bloquea 01_DECISIONES en main
+#   2b. zona protegida (infraestructura) solo por rama mantenimiento/* + PR
+#   3. ids únicos frente a GitHub y estampar actualizado / actualizado_por / historial de estados
+#   4. escáner de datos personales, credenciales y listas cerradas
+
+# --- 1. Python --------------------------------------------------------------
+# En Windows, python3.exe y python.exe pueden ser el alias de la Microsoft Store:
+# existen en el PATH, no son Python y fallan sin decir nada. Por eso no basta con
+# que el nombre exista: se prueba que ejecuta Python de verdad. La prueba es `-V`
+# y no `-c "import sys"` porque el shell de Git de 32 bits parte los argumentos
+# con espacios al lanzar programas de Windows (visto en el primer puesto Windows).
+# Se captura la salida con $(...) y se mira que empiece por "Python": en ese mismo
+# shell de 32 bits, `"$c" -V >/dev/null` dentro de un bucle devuelve 127 (visto
+# el 2026-10-16), y el alias de la Store no imprime "Python".
+# Primero .githooks/python-ruta.txt (no versionado): la ruta de Python a mano, para puestos
+# donde Obsidian arranca sin Python en su PATH aunque la terminal sí lo vea (visto el 2026-10-20).
+PY=""
+if [ -f .githooks/python-ruta.txt ]; then
+  RUTA=$(head -n 1 .githooks/python-ruta.txt | tr -d '\r')
+  v=$("$RUTA" -V 2>&1)
+  case "$v" in Python*) PY="$RUTA";; esac
+fi
+[ -z "$PY" ] && for c in py python3 python; do
+  v=$("$c" -V 2>&1)
+  case "$v" in Python*) PY="$c"; break;; esac
+done
+[ -z "$PY" ] && { echo "No encuentro un Python que funcione. Instálalo desde python.org con 'Add to PATH' y, en Windows, desactiva los alias de ejecución python.exe y python3.exe."; exit 1; }
+
+RAMA=$(git rev-parse --abbrev-ref HEAD)
+
+# --- 2b. Zona protegida: infraestructura solo por rama mantenimiento/* + PR -----
+# Sin xargs: en el Git de 32 bits del primer puesto Windows, xargs no conseguía lanzar
+# Python (salía 1 sin mensaje; visto el 2026-10-16). Los ficheros se pasan como argumentos
+# separando solo por salto de línea (IFS): los nombres llevan espacios, nunca saltos.
+NL='
+'
+# En un commit de fusión (existe MERGE_HEAD) el índice trae todo lo que vino del pull, incluida
+# la infraestructura de los PR: no es que la persona la toque. Se compara solo con lo suyo (HEAD).
+if [ "$RAMA" = "main" ] && [ ! -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then
+  TODOS=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMDR)
+  MALOS=$(IFS="$NL"; set -f; "$PY" 05_GENERAL/Herramientas/guardia.py --git $TODOS)
+  if [ -n "$MALOS" ]; then
+    # Desde el 2026-10-27 no se bloquea el commit: se descarta solo el cambio en la infraestructura
+    # (vuelve a como está en HEAD) y el resto, los tickets, sigue. Obsidian Git commitea todo o
+    # nada: un roce accidental con un manual retenía el trabajo del día. Si la llave de
+    # mantenimiento existe, es Claude en un PR y no se descarta nada (guardia.py ya lo sabe).
+    echo "Cambio en la zona protegida descartado (la infraestructura va por rama + PR):"
+    echo "$MALOS" | sed 's/^/  /'
+    echo "$MALOS" | while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      if git cat-file -e "HEAD:$f" 2>/dev/null; then git checkout -q HEAD -- "$f"
+      else git rm -q --cached -- "$f" 2>/dev/null; fi       # fichero nuevo en la zona: fuera del commit
+    done
+  fi
+fi
+
+# Ficheros .md preparados para este commit (añadidos, copiados, modificados).
+# A partir de aquí solo importan las notas; un commit sin .md termina bien.
+FICHEROS=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM -- "*.md")
+[ -z "$FICHEROS" ] && exit 0
+
+# --- 2. Decisiones ------------------------------------------------------------
+if [ "$RAMA" = "main" ] && echo "$FICHEROS" | grep -q '^01_DECISIONES/'; then
+  echo "Las decisiones van por rama + PR. Crea una rama (git switch -c decision/NFQBAU-DEC-NNN) y commitea ahí."
+  exit 1
+fi
+
+# --- 3. Estampado -------------------------------------------------------------
+(IFS="$NL"; set -f; "$PY" 05_GENERAL/Herramientas/estampar.py $FICHEROS) || exit 1
+
+# --- 4. Escáner ---------------------------------------------------------------
+# La lista se recalcula: el estampado puede haber renumerado un ticket (id ya usado en GitHub)
+FICHEROS=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACM -- "*.md")
+(IFS="$NL"; set -f; "$PY" 05_GENERAL/Herramientas/escanear_pii.py $FICHEROS) || {
+  echo "Commit bloqueado: corrige lo indicado arriba."; exit 1; }

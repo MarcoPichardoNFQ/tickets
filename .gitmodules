@@ -1,0 +1,10 @@
+[submodule "06_CODIGO_VERSIONADO/PRD"]
+	path = 06_CODIGO_VERSIONADO/PRD
+	url = https://github.com/RicardoNfq/BAU-NFQ.git
+	branch = PRD
+	ignore = all
+[submodule "06_CODIGO_VERSIONADO/UAT"]
+	path = 06_CODIGO_VERSIONADO/UAT
+	url = https://github.com/RicardoNfq/BAU-NFQ.git
+	branch = UAT
+	ignore = all

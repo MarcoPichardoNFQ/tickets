@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Día a día del soporte BAU: circuito completo",
+    "viewBox": [
+      960,
+      1442
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "alta",
+        "label": "Del correo al ticket",
+        "focus": [
+          "cliente",
+          "studio",
+          "vault",
+          "chat",
+          "bau",
+          "claude"
+        ],
+        "note": "El script lee el buzón, Gemini resume, la Action crea el ticket, Chat avisa; Claude anonimiza y busca similares."
+      },
+      {
+        "id": "circuito",
+        "label": "Cliente y NTT",
+        "focus": [
+          "cliente",
+          "bau",
+          "ntt"
+        ],
+        "note": "Dos aprobaciones del cliente y dos despliegues de NTT; Claude redacta los correos en pt-BR."
+      },
+      {
+        "id": "cierre",
+        "label": "Cierre y avisos",
+        "focus": [
+          "bau",
+          "claude",
+          "vault",
+          "chat"
+        ],
+        "note": "Claude escribe los cinco bloques y la solución corta; archivo a 30 días; aviso diario en tres zonas."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "cliente",
+      "type": "external",
+      "label": "Cliente"
+    },
+    {
+      "id": "studio",
+      "type": "cloud",
+      "label": "Script"
+    },
+    {
+      "id": "bau",
+      "type": "frontend",
+      "label": "Equipo BAU"
+    },
+    {
+      "id": "claude",
+      "type": "backend",
+      "label": "Claude"
+    },
+    {
+      "id": "vault",
+      "type": "database",
+      "label": "Vault"
+    },
+    {
+      "id": "codigo",
+      "type": "backend",
+      "label": "Código"
+    },
+    {
+      "id": "ntt",
+      "type": "cloud",
+      "label": "NTT"
+    },
+    {
+      "id": "chat",
+      "type": "messagebus",
+      "label": "Google Chat"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 492,
+      "label": "Alta · Abierto → En curso"
+    },
+    {
+      "from": 534,
+      "to": 670,
+      "label": "Revisión cliente"
+    },
+    {
+      "from": 712,
+      "to": 932,
+      "label": "Pendiente despliegue UAT → Pruebas cliente UAT"
+    },
+    {
+      "from": 974,
+      "to": 1152,
+      "label": "Pendiente despliegue PRD"
+    },
+    {
+      "from": 1194,
+      "to": 1372,
+      "label": "Resuelto"
+    }
+  ],
+  "messages": [
+    {
+      "from": "cliente",
+      "to": "studio",
+      "label": "correo al buzón compartido",
+      "variant": "emphasis",
+      "note": "cada 5 min; alertas Rundeck excluidas",
+      "y": 180
+    },
+    {
+      "from": "studio",
+      "to": "vault",
+      "label": "el script lee el buzón y las capturas, Gemini resume y decide → Action crea o actualiza",
+      "variant": "emphasis",
+      "note": "hilo vivo: al histórico; sin ticket: nuevo si es_ticket; entorno, categoría, prioridad, detalles y adjuntos",
+      "y": 222
+    },
+    {
+      "from": "vault",
+      "to": "chat",
+      "label": "ticket nuevo, asignado al responsable de guardia; respuesta en hilo vivo",
+      "variant": "dashed",
+      "y": 264,
+      "note": "sin guardia: ticket sin responsable y aviso"
+    },
+    {
+      "from": "bau",
+      "to": "vault",
+      "label": "lo coge: responsable, prioridad, categoría",
+      "variant": "emphasis",
+      "note": "o ticket nuevo por Templater; listas cerradas",
+      "y": 306
+    },
+    {
+      "from": "bau",
+      "to": "claude",
+      "label": "/ticket consultar · actualizar: pega el correo o pregunta",
+      "variant": "emphasis",
+      "y": 348
+    },
+    {
+      "from": "claude",
+      "to": "vault",
+      "label": "anonimiza, propone campos, busca similares en tickets y referencia",
+      "variant": "emphasis",
+      "note": "escribe solo tras confirmar",
+      "y": 390
+    },
+    {
+      "from": "claude",
+      "to": "vault",
+      "label": "intenta tocar infraestructura → guardia: BLOQUEADO",
+      "variant": "security",
+      "note": "zona protegida; solo con la llave",
+      "y": 432
+    },
+    {
+      "from": "bau",
+      "to": "codigo",
+      "y": 474,
+      "label": "feature/NFQBAU: update, rollback, informe",
+      "variant": "emphasis"
+    },
+    {
+      "from": "bau",
+      "to": "cliente",
+      "y": 568,
+      "label": "envío del paquete",
+      "note": "correo redactado por Claude en pt-BR"
+    },
+    {
+      "from": "cliente",
+      "to": "bau",
+      "y": 610,
+      "label": "RECHAZO: vuelve a En curso",
+      "variant": "dashed"
+    },
+    {
+      "from": "cliente",
+      "to": "bau",
+      "y": 652,
+      "label": "APROBACIÓN",
+      "variant": "return"
+    },
+    {
+      "from": "bau",
+      "to": "ntt",
+      "y": 746,
+      "label": "solicitud UAT",
+      "variant": "emphasis",
+      "note": "correo redactado por Claude en pt-BR"
+    },
+    {
+      "from": "ntt",
+      "to": "bau",
+      "y": 788,
+      "label": "ya está (ticket NTT opcional)",
+      "variant": "return"
+    },
+    {
+      "from": "bau",
+      "to": "cliente",
+      "y": 830,
+      "label": "listo para pruebas",
+      "note": "correo redactado por Claude en pt-BR"
+    },
+    {
+      "from": "cliente",
+      "to": "bau",
+      "y": 872,
+      "label": "RECHAZO: vuelve a En curso",
+      "variant": "dashed"
+    },
+    {
+      "from": "cliente",
+      "to": "bau",
+      "y": 914,
+      "label": "APROBACIÓN UAT",
+      "variant": "return"
+    },
+    {
+      "from": "cliente",
+      "to": "bau",
+      "y": 1008,
+      "label": "APROBACIÓN PRD",
+      "variant": "return"
+    },
+    {
+      "from": "bau",
+      "to": "ntt",
+      "y": 1050,
+      "label": "solicitud PRD",
+      "variant": "emphasis",
+      "note": "correo redactado por Claude en pt-BR"
+    },
+    {
+      "from": "ntt",
+      "to": "bau",
+      "y": 1092,
+      "label": "desplegado",
+      "variant": "return"
+    },
+    {
+      "from": "bau",
+      "to": "codigo",
+      "y": 1134,
+      "label": "PR UAT → PRD + tag"
+    },
+    {
+      "from": "bau",
+      "to": "claude",
+      "label": "/ticket resolver: los cinco bloques",
+      "variant": "emphasis",
+      "y": 1228
+    },
+    {
+      "from": "claude",
+      "to": "vault",
+      "label": "escribe resolución, síntoma y solución corta; Resuelto",
+      "variant": "emphasis",
+      "note": "rollback obligatorio si hubo código",
+      "y": 1270
+    },
+    {
+      "from": "vault",
+      "to": "bau",
+      "y": 1312,
+      "label": "/ticket consultar · Dashboard y Tickets.base · informe semanal · aviso Google Chat · archivo 30 días",
+      "variant": "return"
+    },
+    {
+      "from": "vault",
+      "to": "chat",
+      "label": "aviso diario 09:00 Madrid · 09:00 São Paulo · 11:00 México: vencidos y esperas",
+      "variant": "dashed",
+      "note": "solo si hay algo que avisar",
+      "y": 1354
+    }
+  ],
+  "activations": [
+    {
+      "participant": "studio",
+      "from": 174,
+      "to": 228,
+      "type": "cloud"
+    },
+    {
+      "participant": "bau",
+      "from": 300,
+      "to": 1360,
+      "type": "frontend"
+    },
+    {
+      "participant": "claude",
+      "from": 342,
+      "to": 438,
+      "type": "backend"
+    },
+    {
+      "participant": "cliente",
+      "from": 562,
+      "to": 658,
+      "type": "external"
+    },
+    {
+      "participant": "ntt",
+      "from": 740,
+      "to": 794,
+      "type": "cloud"
+    },
+    {
+      "participant": "cliente",
+      "from": 824,
+      "to": 1014,
+      "type": "external"
+    },
+    {
+      "participant": "ntt",
+      "from": 1044,
+      "to": 1098,
+      "type": "cloud"
+    },
+    {
+      "participant": "claude",
+      "from": 1222,
+      "to": 1276,
+      "type": "backend"
+    },
+    {
+      "participant": "vault",
+      "from": 1264,
+      "to": 1360,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Siete estados, un circuito",
+      "items": [
+        "Abierto → En curso → Revisión cliente → Pendiente despliegue UAT → Pruebas cliente UAT → Pendiente despliegue PRD → Resuelto",
+        "Cada cambio de estado queda con fecha, hora y autor sin teclearlo; un rechazo devuelve a En curso"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Redes contra datos personales y cambios de paso",
+      "items": [
+        "Claude escanea al escribir; el hook bloquea el commit, igual en Mac y Windows; la Action avisa en el push",
+        "Gemini decide si se abre ticket; un hilo con ticket vivo se actualiza siempre; cerrado nunca se reabre solo"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Ver, avisar, reutilizar",
+      "items": [
+        "Dashboard con botones y gráficos, Tickets.base, bau en terminal, barra de Claude Code",
+        "Google Chat: aviso diario en tres zonas horarias, ticket nuevo o respuesta en hilo, correo no convertido, guardia sin cubrir"
+      ]
+    }
+  ]
+}

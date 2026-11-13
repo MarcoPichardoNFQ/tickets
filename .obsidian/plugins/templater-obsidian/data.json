@@ -1,0 +1,40 @@
+{
+  "data_version": 2,
+  "command_timeout": 5,
+  "templates_folder": "05_GENERAL/Plantillas/Templater",
+  "templates_pairs": [],
+  "trigger_on_file_creation_mode": "none",
+  "auto_jump_to_cursor": true,
+  "jump_to_cursor_after_file_name": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "folder_templates": [],
+  "file_templates": [],
+  "syntax_highlighting": true,
+  "syntax_highlighting_mobile": false,
+  "enabled_templates_hotkeys": [
+    {
+      "template": "05_GENERAL/Plantillas/Templater/Ticket.md",
+      "insert_enabled": false,
+      "create_enabled": true
+    },
+    {
+      "template": "05_GENERAL/Plantillas/Templater/Proveedor NTT.md",
+      "insert_enabled": false,
+      "create_enabled": true
+    },
+    {
+      "template": "05_GENERAL/Plantillas/Templater/Cambiar estado.md",
+      "insert_enabled": true,
+      "create_enabled": false
+    },
+    {
+      "template": "05_GENERAL/Plantillas/Templater/Cambiar responsable.md",
+      "insert_enabled": true,
+      "create_enabled": false
+    }
+  ],
+  "startup_templates": [],
+  "intellisense_render": "1",
+  "ignore_folders_on_creation": []
+}

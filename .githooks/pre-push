@@ -1,0 +1,20 @@
+#!/bin/sh
+# Hook pre-push del vault (core.hooksPath=.githooks). Ids únicos frente a GitHub:
+# Obsidian Git hace pull antes del push, así que aquí ya están los tickets de los demás.
+# Si un ticket mío nuevo repite el número de uno que acaba de llegar, estampar.py --push
+# lo renumera, commitea y cancela este push; el siguiente ciclo (5 min) lo sube limpio.
+# Misma prueba de Python que pre-commit (ver allí por qué así).
+# Primero .githooks/python-ruta.txt (no versionado): la ruta de Python a mano, para puestos
+# donde Obsidian arranca sin Python en su PATH aunque la terminal sí lo vea (visto el 2026-10-20).
+PY=""
+if [ -f .githooks/python-ruta.txt ]; then
+  RUTA=$(head -n 1 .githooks/python-ruta.txt | tr -d '\r')
+  v=$("$RUTA" -V 2>&1)
+  case "$v" in Python*) PY="$RUTA";; esac
+fi
+[ -z "$PY" ] && for c in py python3 python; do
+  v=$("$c" -V 2>&1)
+  case "$v" in Python*) PY="$c"; break;; esac
+done
+[ -z "$PY" ] && exit 0                       # sin Python no se bloquea el push: lo vigila la Action
+exec "$PY" 05_GENERAL/Herramientas/estampar.py --push

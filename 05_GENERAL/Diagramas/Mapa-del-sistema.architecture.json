@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Soporte BAU: mapa del sistema",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "personas",
+        "label": "El puesto de cada persona",
+        "focus": [
+          "obsidian",
+          "claude",
+          "vault",
+          "referencia"
+        ],
+        "note": "Obsidian edita y sincroniza, en Mac y Windows con el mismo hook; Claude propone y consulta; la guardia le veda la infraestructura."
+      },
+      {
+        "id": "correo",
+        "label": "Del correo al ticket",
+        "focus": [
+          "cliente",
+          "script",
+          "hoja",
+          "actions",
+          "vault",
+          "chat"
+        ],
+        "note": "El script lee el buzón, Gemini resume y decide, la Action crea o actualiza el ticket y avisa en Chat; la hoja registra."
+      },
+      {
+        "id": "repos",
+        "label": "Los dos repos",
+        "focus": [
+          "vault",
+          "referencia",
+          "codigo"
+        ],
+        "note": "El vault contiene la referencia de Megara y monta el repo de código como submódulos de solo lectura."
+      }
+    ],
+    "viewBox": [
+      1080,
+      560
+    ]
+  },
+  "components": [
+    {
+      "id": "cliente",
+      "type": "external",
+      "label": "Cliente y NTT",
+      "sublabel": "correo al buzón compartido",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "script",
+      "type": "cloud",
+      "label": "Apps Script + Gemini",
+      "sublabel": "buzón y capturas, 5 min",
+      "tag": "resume, anonimiza, decide",
+      "pos": [
+        250,
+        80
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "hoja",
+      "type": "messagebus",
+      "label": "Hoja de correos",
+      "sublabel": "registro y pruebas",
+      "tag": "latido diario",
+      "pos": [
+        460,
+        80
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "chat",
+      "type": "messagebus",
+      "label": "Google Chat",
+      "sublabel": "avisos del vault",
+      "pos": [
+        880,
+        80
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "obsidian",
+      "type": "frontend",
+      "label": "Obsidian",
+      "sublabel": "Mac y Windows, plugins",
+      "tag": "Git cada 5 min",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "claude",
+      "type": "backend",
+      "label": "Claude Code",
+      "sublabel": "/ticket · CLAUDE.md",
+      "tag": "guardia de zona protegida",
+      "pos": [
+        250,
+        440
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "vault",
+      "type": "database",
+      "label": "Vault: notas",
+      "sublabel": "tickets, proveedores, personas",
+      "tag": "fuente de verdad",
+      "pos": [
+        460,
+        260
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "actions",
+      "type": "cloud",
+      "label": "GitHub Actions",
+      "sublabel": "escáner, lunes, aviso, correo",
+      "pos": [
+        670,
+        80
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "referencia",
+      "type": "database",
+      "label": "Referencia Megara",
+      "sublabel": "00_REFERENCIA_TECNICA",
+      "tag": "solo lectura",
+      "pos": [
+        460,
+        440
+      ],
+      "size": [
+        150,
+        62
+      ]
+    },
+    {
+      "id": "codigo",
+      "type": "backend",
+      "label": "Repo BAU-NFQ",
+      "sublabel": "DEV · UAT · PRD",
+      "tag": "submódulos PRD y UAT",
+      "pos": [
+        880,
+        260
+      ],
+      "size": [
+        150,
+        62
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "cliente",
+      "to": "script",
+      "label": "correo",
+      "variant": "emphasis"
+    },
+    {
+      "from": "script",
+      "to": "hoja",
+      "label": "registro",
+      "variant": "dashed"
+    },
+    {
+      "from": "script",
+      "to": "actions",
+      "label": "dispatch con el JSON",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          325,
+          50
+        ],
+        [
+          745,
+          50
+        ]
+      ]
+    },
+    {
+      "from": "actions",
+      "to": "vault",
+      "label": "crea o actualiza, escanea",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          745,
+          200
+        ],
+        [
+          535,
+          200
+        ]
+      ]
+    },
+    {
+      "from": "actions",
+      "to": "chat",
+      "label": "avisos",
+      "variant": "dashed"
+    },
+    {
+      "from": "obsidian",
+      "to": "vault",
+      "label": "edita, hook",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "claude",
+      "to": "vault",
+      "label": "propone",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          325,
+          380
+        ],
+        [
+          535,
+          380
+        ]
+      ]
+    },
+    {
+      "from": "claude",
+      "to": "referencia",
+      "label": "consulta",
+      "variant": "dashed",
+      "route": "straight"
+    },
+    {
+      "from": "vault",
+      "to": "codigo",
+      "label": "submódulos",
+      "variant": "dashed",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Una fuente de verdad",
+      "items": [
+        "Todo es Markdown en Git: tickets, soluciones, referencia, decisiones",
+        "Obsidian para el equipo, Claude para proponer y consultar, GitHub para automatizar"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Lo que entra y lo que sale",
+      "items": [
+        "Entra: correo del buzón compartido, leído por el script y resumido por Gemini; o un ticket creado a mano en Obsidian",
+        "Sale: avisos a Google Chat, informe semanal, correos redactados por Claude"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Protecciones",
+      "items": [
+        "Escáner en tres capas: al escribir, al commitear, al subir",
+        "Guardia: Claude no toca infraestructura sin la llave; cambios por rama y PR",
+        "Pendiente: Proyecto de claude.ai enlazado al repo, para consultar desde el navegador",
+        "Un hilo con ticket vivo se actualiza siempre; un ticket cerrado nunca se reabre solo"
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Repo BAU-NFQ-vault",
+      "wraps": [
+        "vault",
+        "referencia"
+      ],
+      "pad": 16
+    }
+  ]
+}

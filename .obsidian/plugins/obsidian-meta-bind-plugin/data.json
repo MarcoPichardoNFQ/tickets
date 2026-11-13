@@ -1,0 +1,87 @@
+{
+  "devMode": false,
+  "ignoreCodeBlockRestrictions": false,
+  "preferredDateFormat": "YYYY-MM-DD",
+  "firstWeekday": "Monday",
+  "syncInterval": 200,
+  "enableJs": false,
+  "viewFieldDisplayNullAsEmpty": false,
+  "enableSyntaxHighlighting": true,
+  "enableEditorRightClickMenu": true,
+  "inputFieldTemplates": [],
+  "buttonTemplates": [
+    {
+      "id": "bau-nuevo",
+      "label": "Nuevo ticket",
+      "icon": "plus",
+      "style": "primary",
+      "action": {
+        "type": "command",
+        "command": "templater-obsidian:create-05_GENERAL/Plantillas/Templater/Ticket.md"
+      }
+    },
+    {
+      "id": "bau-resolver",
+      "label": "Cambiar estado",
+      "icon": "refresh-cw",
+      "style": "primary",
+      "action": {
+        "type": "command",
+        "command": "templater-obsidian:05_GENERAL/Plantillas/Templater/Cambiar estado.md"
+      }
+    },
+    {
+      "id": "bau-ntt",
+      "label": "Nota NTT",
+      "icon": "factory",
+      "style": "default",
+      "action": {
+        "type": "command",
+        "command": "templater-obsidian:create-05_GENERAL/Plantillas/Templater/Proveedor NTT.md"
+      }
+    },
+    {
+      "id": "bau-dashboard",
+      "label": "Dashboard",
+      "icon": "layout-dashboard",
+      "style": "default",
+      "action": {
+        "type": "command",
+        "command": "homepage:open-homepage"
+      }
+    },
+    {
+      "id": "bau-buscar",
+      "label": "Buscar",
+      "icon": "search",
+      "style": "default",
+      "action": {
+        "type": "command",
+        "command": "omnisearch:show-modal"
+      }
+    },
+    {
+      "id": "bau-tablero",
+      "label": "Tablero",
+      "icon": "kanban",
+      "style": "default",
+      "action": {
+        "type": "open",
+        "link": "[[05_GENERAL/Tickets.base#Tablero]]"
+      }
+    },
+    {
+      "id": "bau-tabla",
+      "label": "Tabla de tickets",
+      "icon": "table",
+      "style": "default",
+      "action": {
+        "type": "open",
+        "link": "[[05_GENERAL/Tickets.base#Abiertos por estado]]"
+      }
+    }
+  ],
+  "excludedFolders": [
+    "05_GENERAL/Plantillas"
+  ]
+}

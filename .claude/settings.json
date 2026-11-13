@@ -1,0 +1,31 @@
+{
+  "_comentario": "Dos hooks: PreToolUse = guardia de la zona protegida (bloquea escrituras en infraestructura salvo modo mantenimiento); PostToolUse = escáner de datos personales al escribir. statusLine = pulso del día.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(cat | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"tool_input\"][\"file_path\"])'); case \"$f\" in *.md) python3 \"$CLAUDE_PROJECT_DIR/05_GENERAL/Herramientas/escanear_pii.py\" \"$f\" >&2 || echo \"Datos personales o valores fuera de lista en $f: corrígelo antes de seguir.\" >&2;; esac"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/05_GENERAL/Herramientas/guardia.py\""
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "python3 \"$CLAUDE_PROJECT_DIR/05_GENERAL/Herramientas/bau.py\" --statusline"
+  }
+}
